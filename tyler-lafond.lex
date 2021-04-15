@@ -68,7 +68,8 @@ E_ID_2 [a-zA-Z][a-zA-Z0-9_]*[_]
 ":="	{printf("ASSIGN\n"); currPos += yyleng;}
 
 "\n"	{currLine++; currPos = 1;}
-[ \t]+	{currPos += yyleng;}
+[ ]	{currPos += yyleng;}
+[\t]+	{currPos += 4;}
 
 {E_ID_1}	{printf("Error at line %d, column %d: identifier \"%s\" must begin with a letter\n", currLine, currPos, yytext); exit(0);}
 
