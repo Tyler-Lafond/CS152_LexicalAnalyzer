@@ -54,7 +54,7 @@ E_ID_2 [a-zA-Z][a-zA-Z0-9_]*[_]
 "<="	{printf("LTE\n"); currPos += yyleng;}
 ">="	{printf("GTE\n"); currPos += yyleng;}
 
-{DIGIT}+	{printf("NUMBER %s\n", yytext); currPos += yyleng;}
+(\.{DIGIT}+)|({DIGIT}+(\.{DIGIT}*)?([eE][+-]?[0-9]+)?)	{printf("NUMBER %s\n", yytext); currPos += yyleng;}
 {ID}	{printf("IDENT %s\n", yytext); currPos += yyleng;}
 {COMMENT}	{currLine++; currPos = 1;}
 
@@ -68,7 +68,7 @@ E_ID_2 [a-zA-Z][a-zA-Z0-9_]*[_]
 ":="	{printf("ASSIGN\n"); currPos += yyleng;}
 
 "\n"	{currLine++; currPos = 1;}
-[ ]	{currPos += yyleng;}
+[ ]+	{currPos += yyleng;}
 [\t]+	{currPos += 4;}
 
 {E_ID_1}	{printf("Error at line %d, column %d: identifier \"%s\" must begin with a letter\n", currLine, currPos, yytext); exit(0);}
