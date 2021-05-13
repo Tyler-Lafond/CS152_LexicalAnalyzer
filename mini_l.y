@@ -14,7 +14,7 @@
 
 %error-verbose
 %start prog_start
-%token FUNCTION BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS BEGIN_BODY END_BODY INTEGER ARRAY ENUM OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE RETURN ADD SUB USUB MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN L_SQUARE_BRACKET R_SQUARE_BRACKET ASSIGN
+%token FUNCTION BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS BEGIN_BODY END_BODY INTEGER ARRAY ENUM OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE RETURN ADD SUB MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN L_SQUARE_BRACKET R_SQUARE_BRACKET ASSIGN
 %token <num_val> NUMBER
 %token <id_val> IDENT
 %right ASSIGN
@@ -24,9 +24,6 @@
 %left LT LTE GT GTE EQ NEQ
 %left ADD SUB
 %left MULT DIV MOD
-%left USUB
-%left L_SQUARE_BRACKET R_SQUARE_BRACKET
-%left L_PAREN R_PAREN
 
 %%
 prog_start:	functions { printf("prog_start -> functions\n");}
@@ -110,11 +107,11 @@ multiplicative_exp:	term { printf("multiplicative_exp -> term\n"); }
 			| term DIV multiplicative_exp { printf("multiplicative_exp -> term DIV multiplicative_exp\n"); }
 			| term MOD multiplicative_exp { printf("multiplicative_exp -> term MOD multiplicative_exp\n"); }
 
-term:	SUB var %prec USUB { printf("term -> SUB var\n"); }
+term:	SUB var { printf("term -> SUB var\n"); }
 	| var { printf("term -> var\n"); }
-	| SUB NUMBER %prec USUB { printf("term -> SUB NUMBER\n"); }
+	| SUB NUMBER { printf("term -> SUB NUMBER\n"); }
 	| NUMBER { printf("term -> NUMBER\n"); }
-	| SUB L_PAREN expression R_PAREN %prec USUB { printf("term -> SUB L_PAREN NUMBER R_PAREN\n"); }
+	| SUB L_PAREN expression R_PAREN { printf("term -> SUB L_PAREN NUMBER R_PAREN\n"); }
 	| L_PAREN expression R_PAREN { printf("term -> L_PAREN NUMBER R_PAREN\n"); }
 	| ident L_PAREN expressions R_PAREN { printf("term -> ident L_PAREN expressions R_PAREN\n"); }
 	;

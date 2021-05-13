@@ -75,26 +75,25 @@ extern int yydebug;
     RETURN = 285,
     ADD = 286,
     SUB = 287,
-    USUB = 288,
-    MULT = 289,
-    DIV = 290,
-    MOD = 291,
-    EQ = 292,
-    NEQ = 293,
-    LT = 294,
-    GT = 295,
-    LTE = 296,
-    GTE = 297,
-    SEMICOLON = 298,
-    COLON = 299,
-    COMMA = 300,
-    L_PAREN = 301,
-    R_PAREN = 302,
-    L_SQUARE_BRACKET = 303,
-    R_SQUARE_BRACKET = 304,
-    ASSIGN = 305,
-    NUMBER = 306,
-    IDENT = 307
+    MULT = 288,
+    DIV = 289,
+    MOD = 290,
+    EQ = 291,
+    NEQ = 292,
+    LT = 293,
+    GT = 294,
+    LTE = 295,
+    GTE = 296,
+    SEMICOLON = 297,
+    COLON = 298,
+    COMMA = 299,
+    L_PAREN = 300,
+    R_PAREN = 301,
+    L_SQUARE_BRACKET = 302,
+    R_SQUARE_BRACKET = 303,
+    ASSIGN = 304,
+    NUMBER = 305,
+    IDENT = 306
   };
 #endif
 
@@ -108,7 +107,7 @@ union YYSTYPE
 	int num_val;
 	char* id_val;
 
-#line 112 "y.tab.h" /* yacc.c:1909  */
+#line 111 "y.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
