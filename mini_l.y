@@ -34,25 +34,47 @@ functions:	{ printf("functions -> epsilon\n"); }
 		;
 
 function:	FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY { printf("function -> FUNCTION IDENT SEMICOLON PEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY\n"); }
+		| error {yyerrok; yyclearin;}
+		| FUNCTION ident error {yyerrok; yyclearin;}
+		| FUNCTION ident SEMICOLON error {yyerrok; yyclearin;}
+		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations error BEGIN_LOCALS {yyerrok; yyclearin;}
+		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS error {yyerrok; yyclearin;}
+		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations error {yyerrok; yyclearin;}
+		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS error {yyerrok; yyclearin;}
+		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements error {yyerrok; yyclearin;}	
 		;
 
 declarations:	{ printf("declarations -> epsilon\n"); }
 		| declaration SEMICOLON declarations { printf("declarations -> declaration SEMICOLON declarations\n"); }
+		| declaration error declarations {yyerrok; yyclearin;}
 		;
 
 declaration:	identifiers COLON INTEGER { printf("declaration -> identifiers COLON INTEGER\n"); }
 		| identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER { printf("declaration -> identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER\n"); }
 		| identifiers COLON ENUM L_PAREN identifiers R_PAREN { printf("declaration -> identifiers COLON ENUM L_PAREN identifiers R_PAREN\n"); }
+		| identifiers error ARRAY {yyerrok; yyclearin;}
+		| identifiers error ENUM {yyerrok; yyclearin;}
+		| identifiers COLON error {yyerrok; yyclearin;}
+		| identifiers COLON ARRAY error {yyerrok; yyclearin;}
+		| identifiers COLON ARRAY L_SQUARE_BRACKET error {yyerrok; yyclearin;}
+		| identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER error {yyerrok; yyclearin;}
+		| identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET error {yyerrok; yyclearin;}
+		| identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF error {yyerrok; yyclearin;}
+		| identifiers COLON ENUM error {yyerrok; yyclearin;}
+		| identifiers COLON ENUM L_PAREN error {yyerrok; yyclearin;}
+		| identifiers COLON ENUM L_PAREN identifiers error {yyerrok; yyclearin;}
 		;
 
 identifiers:	ident { printf("identifiers -> ident\n"); }
 		| ident COMMA identifiers { printf("identifiers -> IDENT COMMA identifiers\n"); }
+		| ident error identifiers {yyerrok; yyclearin;}
 		;
 
 ident:	IDENT { printf("ident -> IDENT %s\n", $1); }
 
 statements:	{ printf("statements -> epsilon\n"); }
 		| statement SEMICOLON statements { printf("statements -> statement SEMICOLON statements\n"); }
+		| statement error {yyerrok; yyclearin;}
 		;
 
 statement:	var ASSIGN expression { printf("statement -> var ASSIGN expression\n"); }
@@ -64,14 +86,26 @@ statement:	var ASSIGN expression { printf("statement -> var ASSIGN expression\n"
 		| WRITE vars { printf("statement -> WRITE vars\n"); }
 		| CONTINUE { printf("statement -> CONTINUE\n"); }
 		| RETURN expression { printf("statement -> RETURN expression\n"); }
+		| IF bool_exp error statements ENDIF {yyerrok; yyclearin;}
+		| IF bool_exp error statements ELSE statements ENDIF {yyerrok; yyclearin;}
+		| IF bool_exp THEN statements error {yyerrok; yyclearin;}
+		| IF bool_exp THEN statements error statements ENDIF{yyerrok; yyclearin;}
+		| IF bool_exp THEN statements ELSE statements error {yyerrok; yyclearin;}
+		| WHILE bool_exp error {yyerrok; yyclearin;}
+		| WHILE bool_exp BEGINLOOP statements error {yyerrok; yyclearin;}
+		| DO error {yyerrok; yyclearin;}
+		| DO BEGINLOOP statements error {yyerrok; yyclearin;}
+		| DO BEGINLOOP statements ENDLOOP error {yyerrok; yyclearin;}
 		;
 
 bool_exp:	relation_and_exp { printf("bool_exp -> relation_and_exp\n"); }
 		| relation_and_exp OR bool_exp { printf("bool_exp -> relation_and_exp OR bool_exp\n"); }
+		| relation_and_exp error {yyerrok; yyclearin;}
 		;
 
 relation_and_exp:	relation_exp { printf("relation_and_exp -> relation_exp\n"); }
 		| relation_exp AND relation_and_exp { printf("relation_and_exp -> relation_exp AND relation_and_exp\n"); }
+		| relation_exp error {yyerrok; yyclearin;}
 		;
 
 relation_exp:	NOT expression comp expression { printf("relation_exp -> NOT expression comp expression\n"); }
@@ -82,6 +116,10 @@ relation_exp:	NOT expression comp expression { printf("relation_exp -> NOT expre
 		| FALSE { printf("relation_exp -> FALSE\n"); }
 		| NOT L_PAREN bool_exp R_PAREN { printf("relation_exp -> NOT L_PAREN bool_exp R_PAREN\n"); }
 		| L_PAREN bool_exp R_PAREN { printf("relation_exp -> L_PAREN bool_exp R_PAREN\n"); }
+		| NOT error {yyerrok; yyclearin;}
+		| NOT expression error expression {yyerrok; yyclearin;}
+		| expression error expression {yyerrok; yyclearin;}
+		| L_PAREN bool_exp error {yyerrok; yyclearin;}
 		;
 
 comp:	EQ { printf("comp -> EQ\n"); }
@@ -95,17 +133,21 @@ comp:	EQ { printf("comp -> EQ\n"); }
 expressions:	{ printf("expressions -> epsilon\n"); }
 		| expression { printf("expressions -> expression\n"); }
 		| expression COMMA expressions { printf("expressions -> expression COMMA expressions\n"); }
+		| expression error {yyerrok; yyclearin;}
 		;
 
 expression:	multiplicative_exp { printf("expression -> multiplicative_exp\n"); }
 		| multiplicative_exp ADD expression { printf("expression -> multiplicative_exp ADD expression\n"); }
 		| multiplicative_exp SUB expression { printf("expression -> multiplicative_exp SUB expression\n"); }
+		| multiplicative_exp error {yyerrok; yyclearin;}
 		;
 
 multiplicative_exp:	term { printf("multiplicative_exp -> term\n"); }
 			| term MULT multiplicative_exp { printf("multiplicative_exp -> term MULT multiplicative_exp\n"); }
 			| term DIV multiplicative_exp { printf("multiplicative_exp -> term DIV multiplicative_exp\n"); }
 			| term MOD multiplicative_exp { printf("multiplicative_exp -> term MOD multiplicative_exp\n"); }
+			| term error multiplicative_exp {yyerrok; yyclearin;}
+			;
 
 term:	SUB var { printf("term -> SUB var\n"); }
 	| var { printf("term -> var\n"); }
@@ -114,14 +156,22 @@ term:	SUB var { printf("term -> SUB var\n"); }
 	| SUB L_PAREN expression R_PAREN { printf("term -> SUB L_PAREN NUMBER R_PAREN\n"); }
 	| L_PAREN expression R_PAREN { printf("term -> L_PAREN NUMBER R_PAREN\n"); }
 	| ident L_PAREN expressions R_PAREN { printf("term -> ident L_PAREN expressions R_PAREN\n"); }
+	| SUB error expression R_PAREN {yyerrok; yyclearin;}
+	| SUB L_PAREN expression error {yyerrok; yyclearin;}
+	| L_PAREN expression error {yyerrok; yyclearin;}
+	| ident error expressions R_PAREN {yyerrok; yyclearin;}
+	| ident L_PAREN expressions error {yyerrok; yyclearin;}
 	;
 
 vars:	var { printf("vars -> var\n"); }
 	| var COMMA vars { printf("vars -> var COMMA vars\n"); }
+	| var error vars {yyerrok; yyclearin;}
 	;
 
 var:	ident { printf("var -> ident\n"); }
 	| ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET { printf("var -> ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n"); }
+	| ident error expression R_SQUARE_BRACKET {yyerrok; yyclearin;}
+	| ident L_SQUARE_BRACKET expression error {yyerrok; yyclearin;}
 	;
 
 %%
