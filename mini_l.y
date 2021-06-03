@@ -597,15 +597,17 @@ expressions:	{
 		}
 		| expression
 		{
-			$$.code = strdup("");
-			$$.place = strdup($1.place);
+			std::string temp;
+			temp.append($1.code);
+			temp += "param " + $1.place + "\n";
+			$$.code = strdup(temp.c_str());
+			$$.place = strdup("");
 		}
 		| expression COMMA expressions
 		{
 			std::string temp;
-			temp.append($1.place);
-			temp.append("|");
-			temp.append($3.place);
+			temp.append($1.code);
+			temp += "param " + $1.place + "\n";
 			$$.code = strdup("");
 			$$.place = strdup(temp.c_str());
 		}
@@ -678,38 +680,80 @@ multiplicative_exp:	term
 			| term error multiplicative_exp {yyerrok; yyclearin;}
 			;
 
-term:	SUB var { printf("term -> SUB var\n"); }
-	| var
+term:	SUB var
 	{
-		//CHECK THIS OVER AGAIN!!!!!!!
 		std::string temp;
+		std::string dst = new_temp();
 		temp.append($1.code);
 		if ($1.arr)
 		{
-			temp.append(".[]| ");
+			temp += ". " + dst + "\n" + "=[] " + dst + ", " + $1.place + "\n" + "* " + dst + ", " + "-1, " + dst + "\n";
 		}
 		else
 		{
-			temp.append(".| ");
+			temp += ". " + dst + "\n" + "= " + dst + ", " + $1.place + "\n" + "* " + dst + ", " + "-1, " + dst + "\n";
 		}
-		temp.append($1.place);
-		temp.append("\n");
 		$$.code = strdup(temp.c_str());
 		$$.place = strdup("");
 	}
-	| SUB NUMBER { printf("term -> SUB NUMBER\n"); }
+	| var
+	{
+		std::string temp;
+		std::string dst = new_temp();
+		temp.append($1.code);
+		if ($1.arr)
+		{
+			temp += ". " + dst + "\n" + "=[] " + dst + ", " + $1.place + "\n";
+		}
+		else
+		{
+			temp += ". " + dst + "\n" + "= " + dst + ", " + $1.place + "\n";
+		}
+		$$.code = strdup(temp.c_str());
+		$$.place = strdup("");
+	}
+	| SUB NUMBER
+	{
+		std::string temp;
+		std::string dst = new_temp();
+		temp += ". " + dst + "\n" + "* " + dst + ", " + "-1, " + std::to_string($2) + "\n";
+		$$.code = strdup(temp.c_str());
+		$$.place = strdup(dst.c_str());
+	}
 	| NUMBER
 	{
 		$$.code = strdup("");
 		$$.place = ($1)
 	}
-	| SUB L_PAREN expression R_PAREN { printf("term -> SUB L_PAREN NUMBER R_PAREN\n"); }
+	| SUB L_PAREN expression R_PAREN
+	{
+		std::string temp;
+		std::string dst = new_temp();
+		temp.append($3.code);
+		temp += ". " + dst + "\n" + "* " + dst + ", " + "-1, " + $3.place + "\n";
+		$$.code = strdup(temp.c_str());
+		$$.place = strdup(dst.c_str());
+	}
 	| L_PAREN expression R_PAREN
 	{
 		$$.code = strdup("");
 		$$.place = strdup($2.place);
 	}
-	| ident L_PAREN expressions R_PAREN { printf("term -> ident L_PAREN expressions R_PAREN\n"); }
+	| ident L_PAREN expressions R_PAREN
+	{
+		std::string temp;
+		std::string func = $1.place;
+		std::string dst = new_temp();
+		if (funcs.find(func) == funcs.end())
+		{
+			printf("ERROR: Function %s is undeclared.\n", func.c_str());
+			exit(0);
+		}
+		temp.append($3.code);
+		temp += ". " + dst + "\n" + "call " + $1.place + ", " + dst + "\n";
+		$$.code = strdup(temp.c_str());
+		$$.place = strdup(dst.c_str());
+	}
 	| SUB error expression R_PAREN {yyerrok; yyclearin;}
 	| SUB L_PAREN expression error {yyerrok; yyclearin;}
 	| L_PAREN expression error {yyerrok; yyclearin;}
