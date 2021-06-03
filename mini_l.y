@@ -405,11 +405,43 @@ statement:	var ASSIGN expression
 		}
 		| READ vars
 		{
-				
+			std::string temp;
+			temp.append($2.code);
+			temp.append(". ");
+			size_t pos = temp.find("|", 0);
+			while (pos != std::string::npos)
+			{
+				temp.replace(pos, 1, "<");
+				pos = temp.find("|", pos);
+			}
+			$$.code = strdup(temp.c_str());
 		}
-		| WRITE vars { printf("statement -> WRITE vars\n"); }
-		| CONTINUE { printf("statement -> CONTINUE\n"); }
-		| RETURN expression { printf("statement -> RETURN expression\n"); }
+		| WRITE vars
+		{
+			std::string temp;
+			temp.append($2.code);
+			temp.append(". ");
+			size_t pos = temp.find("|", 0);
+			while (pos != std::string::npos)
+			{
+				temp.replace(pos, 1, ">");
+				pos = temp.find("|", pos);
+			}
+			$$.code = strdup(temp.c_str());
+		}
+		| CONTINUE
+		{
+			$$.code = strdup("continue\n"); 
+		}
+		| RETURN expression
+		{
+			std::string temp;
+			temp.append($2.code);
+			temp.append("ret ");
+			temp.append($2.place);
+			temp.append("\n");
+			$$.code = strdup(temp.c_str());
+		}
 		| IF bool_exp error statements ENDIF {yyerrok; yyclearin;}
 		| IF bool_exp error statements ELSE statements ENDIF {yyerrok; yyclearin;}
 		| IF bool_exp THEN statements error {yyerrok; yyclearin;}
@@ -422,17 +454,53 @@ statement:	var ASSIGN expression
 		| DO BEGINLOOP statements ENDLOOP error {yyerrok; yyclearin;}
 		;
 
-bool_exp:	relation_and_exp { printf("bool_exp -> relation_and_exp\n"); }
-		| relation_and_exp OR bool_exp { printf("bool_exp -> relation_and_exp OR bool_exp\n"); }
+bool_exp:	relation_and_exp
+		{
+			$$.code = strdup.("");
+			$$.place = strdup($1.place);
+		}
+		| relation_and_exp OR bool_exp
+		{
+			std::string temp;
+			std::string dst = new_temp();
+			temp.append($1.code);
+			temp.append($3.code);
+			temp += ". " + dst + "\n" + "|| " + dst + ", " + $1.place + ", " + $3.place + "\n";
+			$$.code = strdup(temp.c_str());
+			$$.place = strdup(dst.c_str());
+		}
 		| relation_and_exp error {yyerrok; yyclearin;}
 		;
 
-relation_and_exp:	relation_exp { printf("relation_and_exp -> relation_exp\n"); }
-		| relation_exp AND relation_and_exp { printf("relation_and_exp -> relation_exp AND relation_and_exp\n"); }
-		| relation_exp error {yyerrok; yyclearin;}
-		;
+relation_and_exp:	relation_exp
+			{
+				$$.code = strdup("");
+				$$.place = strdup($1.place);
+			}
+			| relation_exp AND relation_and_exp
+			{
+				std::string temp;
+				std::string dst = new_temp();
+				temp.append($1.code);
+				temp.append($3.code);
+				temp += ". " + dst + "\n" + "&& " + dst + ", " + $1.place + ", " + $3.place + "\n";
+				$$.code = strdup(temp.c_str());
+				$$.place = strdup(dst.c_str());
+			}
+			| relation_exp error {yyerrok; yyclearin;}
+			;
 
-relation_exp:	NOT expression comp expression { printf("relation_exp -> NOT expression comp expression\n"); }
+relation_exp:	NOT expression comp expression
+		{
+			std::string dst = new_temp();
+			std::string inv = new_temp();
+			std::string temp;
+			temp.append($1.code);
+			temp.append($3.code);
+			temp += ". " + dst + "\n" + $2.place + dst + ", " + $1.place + ", " + $3.place + "\n" + ". " + inv + "\n" + "! " + inv + ", " + dst + "\n";
+			$$.code = strdup(temp.c_str());
+			$$.place = strdup(inv.c_str());
+		}
 		| expression comp expression
 		{
 			std::string dst = new_temp();
@@ -471,8 +539,20 @@ relation_exp:	NOT expression comp expression { printf("relation_exp -> NOT expre
 			$$.code = strdup("");
 			$$.place = strdup(temp.c_str());
 		}
-		| NOT L_PAREN bool_exp R_PAREN { printf("relation_exp -> NOT L_PAREN bool_exp R_PAREN\n"); }
-		| L_PAREN bool_exp R_PAREN { printf("relation_exp -> L_PAREN bool_exp R_PAREN\n"); }
+		| NOT L_PAREN bool_exp R_PAREN
+		{
+			std::string temp;
+			std::string dst = new_temp();
+			temp.append($3.code);
+			temp += ". " + dst + "\n" + "! " + dst + ", " + $3.place + "\n";
+			$$.code = strdup(temp.c_str());
+			$$.place = (dst.c_str());
+		}
+		| L_PAREN bool_exp R_PAREN
+		{
+			$$.code = ("");
+			$$.place = ($2.place);
+		}
 		| NOT error {yyerrok; yyclearin;}
 		| NOT expression error expression {yyerrok; yyclearin;}
 		| expression error expression {yyerrok; yyclearin;}
@@ -511,31 +591,124 @@ comp:	EQ
 	}
 	;
 
-expressions:	{ printf("expressions -> epsilon\n"); }
-		| expression { printf("expressions -> expression\n"); }
-		| expression COMMA expressions { printf("expressions -> expression COMMA expressions\n"); }
+expressions:	{
+			$$.code = strdup("");
+			$$.place = strdup("");
+		}
+		| expression
+		{
+			$$.code = strdup("");
+			$$.place = strdup($1.place);
+		}
+		| expression COMMA expressions
+		{
+			std::string temp;
+			temp.append($1.place);
+			temp.append("|");
+			temp.append($3.place);
+			$$.code = strdup("");
+			$$.place = strdup(temp.c_str());
+		}
 		| expression error {yyerrok; yyclearin;}
 		;
 
-expression:	multiplicative_exp { printf("expression -> multiplicative_exp\n"); }
-		| multiplicative_exp ADD expression { printf("expression -> multiplicative_exp ADD expression\n"); }
-		| multiplicative_exp SUB expression { printf("expression -> multiplicative_exp SUB expression\n"); }
+expression:	multiplicative_exp
+		{
+			$$.code = strdup("");
+			$$.place = strdup($1.place);
+		}
+		| multiplicative_exp ADD expression
+		{
+			std::string temp;
+			std::string dst = new_temp();
+			temp.append($1.code);
+			temp.append($3.code);
+			temp += ". " + dst + "\n" + "+ " + dst + ", " + $1.place + ", " + $3.place + "\n";
+			$$.code = strdup(temp.c_str());
+			$$.place = strdup(dst.c_str());
+		}
+		| multiplicative_exp SUB expression
+		{
+			std::string temp;
+			std::string dst = new_temp();
+			temp.append($1.code);
+			temp.append($3.code);
+			temp += ". " + dst + "\n" + "- " + dst + ", " + $1.place + ", " + $3.place + "\n";
+			$$.code = strdup(temp.c_str());
+			$$.place = strdup(dst.c_str());
+		}
 		| multiplicative_exp error {yyerrok; yyclearin;}
 		;
 
-multiplicative_exp:	term { printf("multiplicative_exp -> term\n"); }
-			| term MULT multiplicative_exp { printf("multiplicative_exp -> term MULT multiplicative_exp\n"); }
-			| term DIV multiplicative_exp { printf("multiplicative_exp -> term DIV multiplicative_exp\n"); }
-			| term MOD multiplicative_exp { printf("multiplicative_exp -> term MOD multiplicative_exp\n"); }
+multiplicative_exp:	term
+			{
+				$$.code = strdup("");
+				$$.place = strdup($1.place);
+			}
+			| term MULT multiplicative_exp
+			{
+				std::string temp;
+				std::string dst = new_temp();
+				temp.append($1.code);
+				temp.append($3.code);
+				temp += ". " + dst + "\n" + "* " + dst + ", " + $1.place + ", " + $3.place + "\n";
+				$$.code = strdup(temp.c_str());
+				$$.place = strdup(dst.c_str());
+			}
+			| term DIV multiplicative_exp
+			{
+				std::string temp;
+				std::string dst = new_temp();
+				temp.append($1.code);
+				temp.append($3.code);
+				temp += ". " + dst + "\n" + "/ " + dst + ", " + $1.place + ", " + $3.place + "\n";
+				$$.code = strdup(temp.c_str());
+				$$.place = strdup(dst.c_str());
+			}
+			| term MOD multiplicative_exp
+			{
+				std::string temp;
+				std::string dst = new_temp();
+				temp.append($1.code);
+				temp.append($3.code);
+				temp += ". " + dst + "\n" + "% " + dst + ", " + $1.place + ", " + $3.place + "\n";
+				$$.code = strdup(temp.c_str());
+				$$.place = strdup(dst.c_str());
+			}
 			| term error multiplicative_exp {yyerrok; yyclearin;}
 			;
 
 term:	SUB var { printf("term -> SUB var\n"); }
-	| var { printf("term -> var\n"); }
+	| var
+	{
+		//CHECK THIS OVER AGAIN!!!!!!!
+		std::string temp;
+		temp.append($1.code);
+		if ($1.arr)
+		{
+			temp.append(".[]| ");
+		}
+		else
+		{
+			temp.append(".| ");
+		}
+		temp.append($1.place);
+		temp.append("\n");
+		$$.code = strdup(temp.c_str());
+		$$.place = strdup("");
+	}
 	| SUB NUMBER { printf("term -> SUB NUMBER\n"); }
-	| NUMBER { printf("term -> NUMBER\n"); }
+	| NUMBER
+	{
+		$$.code = strdup("");
+		$$.place = ($1)
+	}
 	| SUB L_PAREN expression R_PAREN { printf("term -> SUB L_PAREN NUMBER R_PAREN\n"); }
-	| L_PAREN expression R_PAREN { printf("term -> L_PAREN NUMBER R_PAREN\n"); }
+	| L_PAREN expression R_PAREN
+	{
+		$$.code = strdup("");
+		$$.place = strdup($2.place);
+	}
 	| ident L_PAREN expressions R_PAREN { printf("term -> ident L_PAREN expressions R_PAREN\n"); }
 	| SUB error expression R_PAREN {yyerrok; yyclearin;}
 	| SUB L_PAREN expression error {yyerrok; yyclearin;}
