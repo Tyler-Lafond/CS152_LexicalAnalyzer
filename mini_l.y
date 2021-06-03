@@ -1,6 +1,7 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
+	#include <map>
 	#include <set>
 	#include <string.h>
 	int tempCount = 0;
@@ -8,7 +9,8 @@
 	void yyerror(const char *msg);
 	extern int currLine;
 	extern int currPos;
-	FILE *yyin;
+	extern FILE *yyin;
+	int yylex();
 	bool mainFunc = false;
 	std::map<std::string, std::string> varTemp;
 	std::map<std::string, int> arrSize;
@@ -303,7 +305,6 @@ statements:	statement SEMICOLON statements
 		|
 		{
 			$$.code = strdup("");
-			$$.place = strdup("");
 		}
 		| statement error {yyerrok; yyclearin;}
 		;
@@ -456,7 +457,7 @@ statement:	var ASSIGN expression
 
 bool_exp:	relation_and_exp
 		{
-			$$.code = strdup.("");
+			$$.code = strdup("");
 			$$.place = strdup($1.place);
 		}
 		| relation_and_exp OR bool_exp
@@ -495,9 +496,9 @@ relation_exp:	NOT expression comp expression
 			std::string dst = new_temp();
 			std::string inv = new_temp();
 			std::string temp;
-			temp.append($1.code);
-			temp.append($3.code);
-			temp += ". " + dst + "\n" + $2.place + dst + ", " + $1.place + ", " + $3.place + "\n" + ". " + inv + "\n" + "! " + inv + ", " + dst + "\n";
+			temp.append($2.code);
+			temp.append($4.code);
+			temp += ". " + dst + "\n" + $3.place + dst + ", " + $2.place + ", " + $4.place + "\n" + ". " + inv + "\n" + "! " + inv + ", " + dst + "\n";
 			$$.code = strdup(temp.c_str());
 			$$.place = strdup(inv.c_str());
 		}
@@ -546,7 +547,7 @@ relation_exp:	NOT expression comp expression
 			temp.append($3.code);
 			temp += ". " + dst + "\n" + "! " + dst + ", " + $3.place + "\n";
 			$$.code = strdup(temp.c_str());
-			$$.place = (dst.c_str());
+			$$.place = strdup(dst.c_str());
 		}
 		| L_PAREN bool_exp R_PAREN
 		{
@@ -599,7 +600,9 @@ expressions:	{
 		{
 			std::string temp;
 			temp.append($1.code);
-			temp += "param " + $1.place + "\n";
+			temp.append("param ");
+			temp.append($1.place);
+			temp.append("\n");
 			$$.code = strdup(temp.c_str());
 			$$.place = strdup("");
 		}
@@ -607,7 +610,9 @@ expressions:	{
 		{
 			std::string temp;
 			temp.append($1.code);
-			temp += "param " + $1.place + "\n";
+			temp.append("param ");
+			temp.append($1.place);
+			temp.append("\n");
 			$$.code = strdup("");
 			$$.place = strdup(temp.c_str());
 		}
@@ -684,14 +689,14 @@ term:	SUB var
 	{
 		std::string temp;
 		std::string dst = new_temp();
-		temp.append($1.code);
-		if ($1.arr)
+		temp.append($2.code);
+		if ($2.arr)
 		{
-			temp += ". " + dst + "\n" + "=[] " + dst + ", " + $1.place + "\n" + "* " + dst + ", " + "-1, " + dst + "\n";
+			temp += ". " + dst + "\n" + "=[] " + dst + ", " + $2.place + "\n" + "* " + dst + ", " + "-1, " + dst + "\n";
 		}
 		else
 		{
-			temp += ". " + dst + "\n" + "= " + dst + ", " + $1.place + "\n" + "* " + dst + ", " + "-1, " + dst + "\n";
+			temp += ". " + dst + "\n" + "= " + dst + ", " + $2.place + "\n" + "* " + dst + ", " + "-1, " + dst + "\n";
 		}
 		$$.code = strdup(temp.c_str());
 		$$.place = strdup("");
@@ -722,8 +727,11 @@ term:	SUB var
 	}
 	| NUMBER
 	{
-		$$.code = strdup("");
-		$$.place = ($1)
+		std::string temp;
+		std::string dst = new_temp();
+		temp += ". " + dst + "\n" + "= " + dst + ", " + std::to_string($1) + "\n";
+		$$.code = strdup(temp.c_str());
+		$$.place = strdup(dst.c_str());
 	}
 	| SUB L_PAREN expression R_PAREN
 	{
