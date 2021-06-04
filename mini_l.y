@@ -15,6 +15,7 @@
 	std::map<std::string, std::string> varTemp;
 	std::map<std::string, int> arrSize;
 	std::set<std::string> funcs;
+	std::string fileName;
 	std::string new_temp();
 	std::string new_label();
 	std::set<std::string> reserved {"NUMBER", "IDENT", "FUNCTION", "BEGIN_PARAMS", "END_PARAMS", "BEGIN_LOCALS", "END_LOCALS", "BEGIN_BODY", "END_BODY", "INTEGER", "ARRAY", "ENUM", "OF", "IF", "THEN", "ENDIF", "ELSE", "WHILE", "DO", "BEGIN_LOOP", "END_LOOP", "CONTINUE", "READ", "WRITE", "AND", "OR", "NOT", "TRUE", "FALSE", "RETURN", "ADD", "SUB", "MULT", "DIV", "MOD", "EQ", "NEQ", "LT", "GT", "LTE", "GTE", "SEMICOLON", "COLON", "COMMA", "L_PAREN", "R_PAREN", "L_SQUARE_BRACKET", "R_SQUARE_BRACKET", "ASSIGN", "function", "funcIdent", "declarations", "declaration", "vars", "var", "expressions", "expression", "ident", "identifiers", "bool_exp", "relation_and_exp", "relation_exp", "comp", "multiplicative_exp", "term", "statement", "statements"};
@@ -95,13 +96,13 @@ function:	FUNCTION funcIdent SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGI
 			printf(temp.c_str());
 		}
 		| error {yyerrok; yyclearin;}
-		| FUNCTION ident error {yyerrok; yyclearin;}
-		| FUNCTION ident SEMICOLON error {yyerrok; yyclearin;}
-		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations error BEGIN_LOCALS {yyerrok; yyclearin;}
-		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS error {yyerrok; yyclearin;}
-		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations error {yyerrok; yyclearin;}
-		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS error {yyerrok; yyclearin;}
-		| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements error {yyerrok; yyclearin;}	
+		| FUNCTION funcIdent error {yyerrok; yyclearin;}
+		| FUNCTION funcIdent SEMICOLON error {yyerrok; yyclearin;}
+		| FUNCTION funcIdent SEMICOLON BEGIN_PARAMS declarations error BEGIN_LOCALS {yyerrok; yyclearin;}
+		| FUNCTION funcIdent SEMICOLON BEGIN_PARAMS declarations END_PARAMS error {yyerrok; yyclearin;}
+		| FUNCTION funcIdent SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations error {yyerrok; yyclearin;}
+		| FUNCTION funcIdent SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS error {yyerrok; yyclearin;}
+		| FUNCTION funcIdent SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements error {yyerrok; yyclearin;}	
 		;
 
 declarations:	declaration SEMICOLON declarations
@@ -239,11 +240,127 @@ declaration:	identifiers COLON INTEGER
 						arrSize[ident] = $5;
 					}
 					temp.append(ident);
+					left = right+1;
+				}
+				temp.append(", ");
+				temp.append(std::to_string($5));
+				temp.append("\n");
+			}
+			$$.code = strdup(temp.c_str());
+			$$.place = strdup("");
+		}
+		| identifiers COLON ENUM L_PAREN identifiers R_PAREN
+		{
+			int left = 0;
+			int right = 0;
+			std::string parse1($1.place);
+			std::string temp;
+			bool ex = false;
+			while(!ex)
+			{
+				right = parse1.find("|", left);
+				temp.append(". ");
+				if (right == std::string::npos)
+				{
+					std::string ident = parse1.substr(left, right);
+					if (reserved.find(ident) != reserved.end())
+					{
+						printf("ERROR: Identifier %s's name is a reserved word.\n", ident.c_str());
+						exit(0);
+					}
+					if (funcs.find(ident) != funcs.end() || varTemp.find(ident) != varTemp.end())
+					{
+						printf("ERROR: Identifier %s is previously declared.\n", ident.c_str());
+						exit(0);
+					}
+					else
+					{
+						varTemp[ident] = ident;
+						arrSize[ident] = 1;
+					}
+					temp.append(ident);
 					ex = true;
 				}
+				else
+				{
+					std::string ident = parse1.substr(left, right-left);
+					if (reserved.find(ident) != reserved.end())
+					{
+						printf("ERROR: Identifier %s's name is a reserved word.\n", ident.c_str());
+						exit(0);
+					}
+					if (funcs.find(ident) != funcs.end() || varTemp.find(ident) != varTemp.end())
+					{
+						printf("ERROR: Identifier %s is previously declared.\n", ident.c_str());
+						exit(0);
+					}
+					else
+					{
+						varTemp[ident] = ident;
+						arrSize[ident] = 1;
+					}
+					temp.append(ident);
+					left = right+1;
+				}
+				temp.append("\n");
 			}
+
+			left = 0;
+			right = 0;
+			std::string parse2($5.place);
+			ex = false;
+			while(!ex)
+			{
+				right = parse2.find("|", left);
+				temp.append(". ");
+				if (right == std::string::npos)
+				{
+					std::string ident2 = parse2.substr(left, right);
+					if (reserved.find(ident2) != reserved.end())
+					{
+						printf("ERROR: Identifier %s's name is a reserved word.\n", ident2.c_str());
+						exit(0);
+					}
+					if (funcs.find(ident2) != funcs.end() || varTemp.find(ident2) != varTemp.end())
+					{
+						printf("ERROR: Identifier %s is previously declared.\n", ident2.c_str());
+						exit(0);
+					}
+					else
+					{
+						varTemp[ident2] = ident2;
+						arrSize[ident2] = 1;
+					}
+					temp.append(ident2);
+					ex = true;
+				}
+				else
+				{
+					std::string ident2 = parse2.substr(left, right-left);
+					if (reserved.find(ident2) != reserved.end())
+					{
+						printf("ERROR: Identifier %s's name is a reserved word.\n", ident2.c_str());
+						exit(0);
+					}
+					if (funcs.find(ident2) != funcs.end() || varTemp.find(ident2) != varTemp.end())
+					{
+						printf("ERROR: Identifier %s is previously declared.\n", ident2.c_str());
+						exit(0);
+					}
+					else
+					{
+						varTemp[ident2] = ident2;
+						arrSize[ident2] = 1;
+					}
+					temp.append(ident2);
+					left = right+1;
+				}
+				temp.append("\n");
+			}
+			$$.code = strdup(temp.c_str());
+			$$.place = strdup("");
+			
 		}
-		| identifiers COLON ENUM L_PAREN identifiers R_PAREN { printf("declaration -> identifiers COLON ENUM L_PAREN identifiers R_PAREN\n"); }
 		| identifiers error ARRAY {yyerrok; yyclearin;}
 		| identifiers error ENUM {yyerrok; yyclearin;}
 		| identifiers COLON error {yyerrok; yyclearin;}
@@ -276,6 +393,7 @@ identifiers:	ident
 
 funcIdent:	IDENT
 		{
+			std::string temp = $1;
 			if (funcs.find($1) != funcs.end())
 			{
 				printf("ERROR: Function name %s is already declared.\n", $1);
@@ -284,6 +402,8 @@ funcIdent:	IDENT
 			else
 			{
 				funcs.insert($1);
+//				printf(temp.c_str());
+//				printf("\n");
 			}
 			$$.code = strdup("");
 			$$.place = strdup($1);
@@ -408,7 +528,6 @@ statement:	var ASSIGN expression
 		{
 			std::string temp;
 			temp.append($2.code);
-			temp.append(". ");
 			size_t pos = temp.find("|", 0);
 			while (pos != std::string::npos)
 			{
@@ -421,7 +540,6 @@ statement:	var ASSIGN expression
 		{
 			std::string temp;
 			temp.append($2.code);
-			temp.append(". ");
 			size_t pos = temp.find("|", 0);
 			while (pos != std::string::npos)
 			{
@@ -457,7 +575,7 @@ statement:	var ASSIGN expression
 
 bool_exp:	relation_and_exp
 		{
-			$$.code = strdup("");
+			$$.code = strdup($1.code);
 			$$.place = strdup($1.place);
 		}
 		| relation_and_exp OR bool_exp
@@ -475,7 +593,7 @@ bool_exp:	relation_and_exp
 
 relation_and_exp:	relation_exp
 			{
-				$$.code = strdup("");
+				$$.code = strdup($1.code);
 				$$.place = strdup($1.place);
 			}
 			| relation_exp AND relation_and_exp
@@ -551,7 +669,7 @@ relation_exp:	NOT expression comp expression
 		}
 		| L_PAREN bool_exp R_PAREN
 		{
-			$$.code = ("");
+			$$.code = ($2.code);
 			$$.place = ($2.place);
 		}
 		| NOT error {yyerrok; yyclearin;}
@@ -613,15 +731,16 @@ expressions:	{
 			temp.append("param ");
 			temp.append($1.place);
 			temp.append("\n");
-			$$.code = strdup("");
-			$$.place = strdup(temp.c_str());
+			temp.append($3.code);
+			$$.code = strdup(temp.c_str());
+			$$.place = strdup("");
 		}
 		| expression error {yyerrok; yyclearin;}
 		;
 
 expression:	multiplicative_exp
 		{
-			$$.code = strdup("");
+			$$.code = strdup($1.code);
 			$$.place = strdup($1.place);
 		}
 		| multiplicative_exp ADD expression
@@ -649,7 +768,7 @@ expression:	multiplicative_exp
 
 multiplicative_exp:	term
 			{
-				$$.code = strdup("");
+				$$.code = strdup($1.code);
 				$$.place = strdup($1.place);
 			}
 			| term MULT multiplicative_exp
@@ -699,7 +818,7 @@ term:	SUB var
 			temp += ". " + dst + "\n" + "= " + dst + ", " + $2.place + "\n" + "* " + dst + ", " + "-1, " + dst + "\n";
 		}
 		$$.code = strdup(temp.c_str());
-		$$.place = strdup("");
+		$$.place = strdup(dst.c_str());
 	}
 	| var
 	{
@@ -715,7 +834,7 @@ term:	SUB var
 			temp += ". " + dst + "\n" + "= " + dst + ", " + $1.place + "\n";
 		}
 		$$.code = strdup(temp.c_str());
-		$$.place = strdup("");
+		$$.place = strdup(dst.c_str());
 	}
 	| SUB NUMBER
 	{
@@ -744,15 +863,17 @@ term:	SUB var
 	}
 	| L_PAREN expression R_PAREN
 	{
-		$$.code = strdup("");
+		$$.code = strdup($2.code);
 		$$.place = strdup($2.place);
 	}
 	| ident L_PAREN expressions R_PAREN
 	{
 		std::string temp;
 		std::string func = $1.place;
+//		printf(func.c_str());
+//		exit(0);
 		std::string dst = new_temp();
-		if (funcs.find(func) == funcs.end())
+		if (funcs.find($1.place) == funcs.end())
 		{
 			printf("ERROR: Function %s is undeclared.\n", func.c_str());
 			exit(0);
@@ -853,7 +974,7 @@ var:	ident
 %%
 
 int main(int argc, char **argv) {
-
+	
 	if (argc > 1)
 	{
 		yyin = fopen(argv[1], "r");

@@ -1,7 +1,7 @@
 CFLAGS = -g -Wall -ansi -pedantic
 
 mini_1: mini_l.lex mini_l.y
-	bison -v -d --file-prefix=y mini_l.y
+	bison -v -t -d --file-prefix=y mini_l.y
 	flex mini_l.lex
 	g++ ${CFLAGS} -std=c++11 lex.yy.c y.tab.c -lfl -o mini_l
 	rm -f lex.yy.c *.output *.tab.c *.tab.h
