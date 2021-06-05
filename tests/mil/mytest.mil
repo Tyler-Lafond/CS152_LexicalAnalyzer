@@ -4,6 +4,9 @@ func main
 . j
 . k
 .[] t, 20
+. x
+. Proc1
+. Proc2
 .< i
 .< j
 . t0
