@@ -15,7 +15,7 @@
 	std::map<std::string, std::string> varTemp;
 	std::map<std::string, int> arrSize;
 	std::set<std::string> funcs;
-	std::string fileName;
+	std::string fileCode;
 	std::string new_temp();
 	std::string new_label();
 	std::set<std::string> reserved {"NUMBER", "IDENT", "FUNCTION", "BEGIN_PARAMS", "END_PARAMS", "BEGIN_LOCALS", "END_LOCALS", "BEGIN_BODY", "END_BODY", "INTEGER", "ARRAY", "ENUM", "OF", "IF", "THEN", "ENDIF", "ELSE", "WHILE", "DO", "BEGIN_LOOP", "END_LOOP", "CONTINUE", "READ", "WRITE", "AND", "OR", "NOT", "TRUE", "FALSE", "RETURN", "ADD", "SUB", "MULT", "DIV", "MOD", "EQ", "NEQ", "LT", "GT", "LTE", "GTE", "SEMICOLON", "COLON", "COMMA", "L_PAREN", "R_PAREN", "L_SQUARE_BRACKET", "R_SQUARE_BRACKET", "ASSIGN", "function", "funcIdent", "declarations", "declaration", "vars", "var", "expressions", "expression", "ident", "identifiers", "bool_exp", "relation_and_exp", "relation_exp", "comp", "multiplicative_exp", "term", "statement", "statements"};
@@ -57,6 +57,10 @@ prog_start:	{
 				printf("ERROR: No main function declared.\n");
 				exit(0);
 			}
+			else
+			{
+				printf(fileCode.c_str());
+			}
 		}
 		| function prog_start {}
 		;
@@ -93,7 +97,7 @@ function:	FUNCTION funcIdent SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGI
 			}
 			temp.append(statements);
 			temp.append("endfunc\n\n");
-			printf(temp.c_str());
+			fileCode.append(temp.c_str());
 		}
 		| error {yyerrok; yyclearin;}
 		| FUNCTION funcIdent error {yyerrok; yyclearin;}
